@@ -18,13 +18,13 @@ Station = Base.classes.station
 session = Session(engine)
 #weather app
 app = Flask(__name__)
-
+# Get Max Date
 max_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
 max_date = list(np.ravel(max_date))[0]
         
 max_date = dt.datetime.strptime(max_date, '%Y-%m-%d')
 #print(max_date)
-
+#Calculate 1 year from Max Date
 before_date = max_date - dt.timedelta(days=365)
 
 # 3. Define what to do when a user hits the index route
@@ -92,26 +92,26 @@ def temperature():
 
 @app.route('/api/v1.0/<date>/')
 def given_date(date):
-    """Return the average temp, max temp, and min temp for the date"""
-    results = session.query(Measurement.date, func.avg(Measurement.tobs), func.max(Measurement.tobs), func.min(Measurement.tobs)).\
+    """Return the the min, avg, max for the given date"""
+    results = session.query(Measurement.date, func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
     filter(Measurement.date == date).all()
 
 #Create JSON
-    data_list = []
+    date_list = []
     for result in results:
-        row = {}
-        row['Date'] = result[0]
-        row['Average Temperature'] = float(result[1])
-        row['Highest Temperature'] = float(result[2])
-        row['Lowest Temperature'] = float(result[3])
-        data_list.append(row)
+        dates = {}
+        dates['Date'] = result[0]
+        dates['Lowest Temperature'] = float(result[1])
+        dates['Average Temperature'] = float(result[2])
+        dates['Highest Temperature'] = float(result[3])
+        date_list.append(dates)
 
-    return jsonify(data_list)
+    return jsonify(date_list)
 
 @app.route('/api/v1.0/<start_date>/<end_date>/')
 def query_dates(start_date, end_date):
-    """Return the avg, max, min, temp over a specific time period"""
-    results = session.query(func.avg(Measurement.tobs), func.max(Measurement.tobs), func.min(Measurement.tobs)).\
+    """Return the min, avg, max, temp over a specific time period"""
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
     filter(Measurement.date >= start_date, Measurement.date <= end_date).all()
 
     date_list = []
@@ -119,9 +119,9 @@ def query_dates(start_date, end_date):
         dates = {}
         dates["Start Date"] = start_date
         dates["End Date"] = end_date
-        dates["Average Temperature"] = float(result[0])
-        dates["Highest Temperature"] = float(result[1])
-        dates["Lowest Temperature"] = float(result[2])
+       dates['Lowest Temperature'] = float(result[1])
+        dates['Average Temperature'] = float(result[2])
+        dates['Highest Temperature'] = float(result[3])
         date_list.append(dates)
     return jsonify(date_list)
 
