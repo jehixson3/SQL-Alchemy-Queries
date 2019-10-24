@@ -71,6 +71,7 @@ def precipitation():
 
 @app.route("/api/v1.0/stations")
 def stations():
+
     session = Session(engine)
     results = session.query(Station.station).all()
     session.close()
@@ -78,6 +79,7 @@ def stations():
 
 @app.route("/api/v1.0/tobs")
 def temperature():
+    """Return temperature observations for the last year"""
     session = Session(engine)
     max_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     max_date = list(np.ravel(max_date))[0]
@@ -96,7 +98,7 @@ def temperature():
 
 @app.route("/api/v1.0/<start>")  
 def single_date(start):
-    """Return the average temp, max temp, and min temp for the date"""
+    """Return the min temp, average temp, and max temp for the date"""
     session = Session(engine)
     strt_dt = dt.datetime.strptime(start, "%Y-%m-%d")
     dates_msr = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
@@ -112,9 +114,9 @@ def query_dates(start_date, end_date):
     session = Session(engine)
     start_dt = dt.datetime.strptime(start_date, "%Y-%m-%d")
     end_dt = dt.datetime.strptime(end_date, "%Y-%m-%d")
-    """Return the avg, max, min, temp over a specific time period"""
+    """Return the min temp, average temp, and max temp over a specific time period"""
     results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start_date, Measurement.date <= end_date).all()
+        filter(Measurement.date >= start_dt, Measurement.date <= end_dt).all()
 
     date_list = []
     for result in results:
@@ -122,11 +124,10 @@ def query_dates(start_date, end_date):
         row["Start Date"] = start_date
         row["End Date"] = end_date
         row["Lowest Temperature"] = float(result[0])
-        row["Average Temperature"] = float(result[1])
+        row["Average Temperature"] = round(float(result[1]))
         row["Highest Temperature"] = float(result[2])
         date_list.append(row)
     return jsonify(date_list)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
