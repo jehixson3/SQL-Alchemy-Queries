@@ -32,28 +32,29 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return (
-        f"Available Routes:<br/>"
-        f"Welcome to my 'Hawaii Rainfall from 1/1/2010 - 8/32/2017' page!<br/>"
+        f"Welcome to my Hawaii Rainfall from 1/1/2010 - 8/32/2017 page!<br/>"
         f"<br/>"
-        f"Please paste any of these routes into the browser to access its page<br/>"
+        f"Available Routes:<br/>"
+        f"<br/>"
+        f"Please paste any of these routes into the browser to access its page.<br/>"
         f"<br/>"
         f"/api/v1.0/precipitation<br/>"
-        f"Dates from the last year 8/2016 - 8/2017<br/>"
-        f"-Returns a json list of precipatation by date<br/>"
+        f"Dates from the last year 8/2016 - 8/2017.<br/>"
+        f"-Returns a json list of precipatation by date.<br/>"
         f"<br/>"
         f"/api/v1.0/stations<br/>"
-        f"-Returns a json list of stations<br/>"
+        f"-Returns a json list of stations.<br/>"
         f"<br/>"  
         f"/api/v1.0/tobs<br/>"
-        f"Return a JSON list of Temperature Observations (tobs) for the previous year<br/>"
+        f"Return a JSON list of Temperature Observations (tobs) for the previous year.<br/>"
         f"<br/>"
-        f"/api/v1.0/yyyy-mm-dd<br/>"
+        f"/api/v1.0/start date<br/>"
         f"Returns minimum temperature, the average temperature, and the max temperature<br/>"
-        f" for given date. please use format yyyy-mm-dd, thank you<br/>"
+        f" for given date please use format yyyy-mm-dd in place of start date, thank you.<br/>"
         f"<br/>"
-        f"/api/v1.0/yyyy-mm-dd/yyyy-mm-dd<br/>"
+        f"/api/v1.0/start date/end date/>"
         f"Returns minimum temperature, the average temperature, and the max temperature<br/>"
-        f" for given date range please use format yyyy-mm-dd, thank you<br/>"
+        f" for given date range please use format yyyy-mm-dd and seperate the dates with a forward /, thank you.<br/>"
     )   
 
 @app.route("/api/v1.0/precipitaton")
@@ -89,7 +90,42 @@ def temperature():
     group_by(Measurement.date).\
     order_by(Measurement.date).all()
     session.close
+
+
     return jsonify(dict(lst_year_prcp))
+
+@app.route("/api/v1.0/<start>")  
+def single_date(start):
+    """Return the average temp, max temp, and min temp for the date"""
+    session = Session(engine)
+    strt_dt = dt.datetime.strptime(start, "%Y-%m-%d")
+    dates_msr = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= strt_dt).all()
+    session.close()
+
+    sum_dt = list(np.ravel(dates_msr))
+#Create JSON
+    return jsonify(sum_dt)
+
+@app.route('/api/v1.0/<start_date>/<end_date>/')
+def query_dates(start_date, end_date):
+    session = Session(engine)
+    start_dt = dt.datetime.strptime(start_date, "%Y-%m-%d")
+    end_dt = dt.datetime.strptime(end_date, "%Y-%m-%d")
+    """Return the avg, max, min, temp over a specific time period"""
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date, Measurement.date <= end_date).all()
+
+    date_list = []
+    for result in results:
+        row = {}
+        row["Start Date"] = start_date
+        row["End Date"] = end_date
+        row["Lowest Temperature"] = float(result[0])
+        row["Average Temperature"] = float(result[1])
+        row["Highest Temperature"] = float(result[2])
+        date_list.append(row)
+    return jsonify(date_list)
 
 
 if __name__ == '__main__':
