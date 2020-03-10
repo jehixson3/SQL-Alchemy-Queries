@@ -6,4 +6,4 @@ Queries were used to learn the total number of stations and the most active stat
 
 Lastly, after retrieving 12cmonths of tempature observations, the data was ploted by tempature and frequency. (see Output/climate_analysis.png files for pictures of the graph).  
 
-The code was then used to create a python / Flask API app to create a webpage of the data.
+The code was then used to create a python / Flask API app to create a webpage of the data that was rendered on localhost:8000.
