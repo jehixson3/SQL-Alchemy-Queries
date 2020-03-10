@@ -1,3 +1,4 @@
+# Import Dependencies
 import numpy as np
 import pandas as pd
 import datetime as dt
@@ -21,6 +22,7 @@ Base.prepare(engine, reflect=True)
 Measurement = Base.classes.measurement
 Station = Base.classes.station
 
+# Get Max and Start date which is 365 days before Max date
 max_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
 max_date = list(np.ravel(max_date))[0]
         
@@ -29,6 +31,7 @@ before_date = max_date - dt.timedelta(days=365)
 
 app = Flask(__name__)
 
+# Create home route
 @app.route("/")
 def home():
     return (
@@ -56,7 +59,7 @@ def home():
         f"Returns minimum temperature, the average temperature, and the max temperature<br/>"
         f" for given date range please use format yyyy-mm-dd and seperate the dates with a forward /, thank you.<br/>"
     )   
-
+# Routes to create API call precipatation, station and tempature observations and put into json format
 @app.route("/api/v1.0/precipitaton")
 def precipitation():
     session = Session(engine)
@@ -96,6 +99,7 @@ def temperature():
 
     return jsonify(dict(lst_year_prcp))
 
+# Route for when just start date is entered
 @app.route("/api/v1.0/<start>")  
 def single_date(start):
     """Return the min temp, average temp, and max temp for the date"""
@@ -109,6 +113,7 @@ def single_date(start):
 #Create JSON
     return jsonify(sum_dt)
 
+# Route for when start and end date are supplied
 @app.route('/api/v1.0/<start_date>/<end_date>/')
 def query_dates(start_date, end_date):
     session = Session(engine)
